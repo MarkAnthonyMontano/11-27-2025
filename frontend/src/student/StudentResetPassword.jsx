@@ -231,7 +231,7 @@ const StudentResetPassword = () => {
             fontSize: "36px",
           }}
         >
-          STUDENT RESET PASSWORD
+          SECURITY SETTINGS
         </Typography>
       </Box>
 
@@ -274,8 +274,8 @@ const StudentResetPassword = () => {
           </Box>
 
           <Divider sx={{ mb: 2 }} />
-          <Box mt={3}>
-            <InputLabel style={{ color: "red" }}>
+          <Box mt={3} display="flex" flexDirection="column" alignItems="center">
+            <InputLabel sx={{ color: "red", mb: 1, textAlign: "center" }}>
               Turning this off may compromise your account, especially if
               <br /> your login is saved on another device.
             </InputLabel>
@@ -285,13 +285,38 @@ const StudentResetPassword = () => {
                 <Switch
                   checked={otpRequired}
                   onChange={handleOtpToggle}
-                  color="primary"
+                  sx={{
+                    height: 50,
+                
+                    width: 90, // adjust width proportionally
+                    '& .MuiSwitch-switchBase': {
+                      top: 3,
+                      left: 3,
+                      padding: 0,
+                        color: "black",
+                    
+                      '&.Mui-checked': {
+                        transform: 'translateX(40px)',
+                        color: "black"
+
+                      },
+                    },
+                    '& .MuiSwitch-thumb': {
+                      width: 44,
+                      height: 44,
+                        
+                    },
+                    '& .MuiSwitch-track': {
+                      borderRadius: 10,
+                    },
+                  }}
                 />
               }
               label="Require OTP during login"
+              sx={{ m: 0 }}
             />
-
           </Box>
+
           <Divider sx={{ mb: 2 }} />
 
           <form onSubmit={handleUpdate}>

@@ -1,20 +1,40 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { SettingsContext } from "../App";
-import '../styles/TempStyles.css';
+import "../styles/TempStyles.css";
 import { Link } from "react-router-dom";
-import { Box, Typography, Table, TableBody, TableCell, TableHead, TableRow, TableContainer, Paper, FormControl, Select, InputLabel, MenuItem, Button } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TableContainer,
+  Paper,
+  FormControl,
+  Select,
+  InputLabel,
+  MenuItem,
+  Button,
+} from "@mui/material";
 import axios from "axios";
 import API_BASE_URL from "../apiConfig";
-const FacultyMasterList = () => {
+import { useNavigate, useLocation } from "react-router-dom";
 
+const FacultyMasterList = () => {
+  const navigate = useNavigate();
   const settings = useContext(SettingsContext);
+  const location = useLocation();
+  const { course_id, section_id, school_year_id, department_section_id } =
+    location.state || {};
 
   const [titleColor, setTitleColor] = useState("#000000");
   const [subtitleColor, setSubtitleColor] = useState("#555555");
   const [borderColor, setBorderColor] = useState("#000000");
   const [mainButtonColor, setMainButtonColor] = useState("#1976d2");
-  const [subButtonColor, setSubButtonColor] = useState("#ffffff");   // ✅ NEW
-  const [stepperColor, setStepperColor] = useState("#000000");       // ✅ NEW
+  const [subButtonColor, setSubButtonColor] = useState("#ffffff"); // ✅ NEW
+  const [stepperColor, setStepperColor] = useState("#000000"); // ✅ NEW
 
   const [fetchedLogo, setFetchedLogo] = useState(null);
   const [companyName, setCompanyName] = useState("");
@@ -28,9 +48,10 @@ const FacultyMasterList = () => {
     if (settings.title_color) setTitleColor(settings.title_color);
     if (settings.subtitle_color) setSubtitleColor(settings.subtitle_color);
     if (settings.border_color) setBorderColor(settings.border_color);
-    if (settings.main_button_color) setMainButtonColor(settings.main_button_color);
-    if (settings.sub_button_color) setSubButtonColor(settings.sub_button_color);   // ✅ NEW
-    if (settings.stepper_color) setStepperColor(settings.stepper_color);           // ✅ NEW
+    if (settings.main_button_color)
+      setMainButtonColor(settings.main_button_color);
+    if (settings.sub_button_color) setSubButtonColor(settings.sub_button_color); // ✅ NEW
+    if (settings.stepper_color) setStepperColor(settings.stepper_color); // ✅ NEW
 
     // 🏫 Logo
     if (settings.logo_url) {
@@ -43,10 +64,7 @@ const FacultyMasterList = () => {
     if (settings.company_name) setCompanyName(settings.company_name);
     if (settings.short_term) setShortTerm(settings.short_term);
     if (settings.campus_address) setCampusAddress(settings.campus_address);
-
-  }, [settings]); 
-
-
+  }, [settings]);
 
   const [userID, setUserID] = useState("");
   const [user, setUser] = useState("");
@@ -54,21 +72,21 @@ const FacultyMasterList = () => {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [profData, setPerson] = useState({
-    prof_id: '',
-    fname: '',
-    mname: '',
-    lname: ''
+    prof_id: "",
+    fname: "",
+    mname: "",
+    lname: "",
   });
   const [schoolYears, setSchoolYears] = useState([]);
   const [schoolSemester, setSchoolSemester] = useState([]);
-  const [selectedSchoolYear, setSelectedSchoolYear] = useState('');
-  const [selectedSchoolSemester, setSelectedSchoolSemester] = useState('');
-  const [selectedActiveSchoolYear, setSelectedActiveSchoolYear] = useState('');
+  const [selectedSchoolYear, setSelectedSchoolYear] = useState("");
+  const [selectedSchoolSemester, setSelectedSchoolSemester] = useState("");
+  const [selectedActiveSchoolYear, setSelectedActiveSchoolYear] = useState("");
   const [classListAndDetails, setClassListAndDetails] = useState([]);
   const [courseAssignedTo, setCoursesAssignedTo] = useState([]);
-  const [selectedCourse, setSelectedCourse] = useState('');
+  const [selectedCourse, setSelectedCourse] = useState("");
   const [sectionAssignedTo, setSectionAssignedTo] = useState([]);
-  const [selectedSection, setSelectedSection] = useState('');
+  const [selectedSection, setSelectedSection] = useState("");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("Regular");
   const [sortOrder, setSortOrder] = useState("asc");
   const [currentPage, setCurrentPage] = useState(1);
@@ -96,7 +114,7 @@ const FacultyMasterList = () => {
 
   const fetchPersonData = async (id) => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/get_prof_data/${id}`)
+      const res = await axios.get(`${API_BASE_URL}/get_prof_data/${id}`);
       const first = res.data[0];
 
       const profInfo = {
@@ -111,7 +129,7 @@ const FacultyMasterList = () => {
       setLoading(false);
       setMessage("Error Fetching Professor Personal Data");
     }
-  }
+  };
 
   useEffect(() => {
     if (userID) {
@@ -119,13 +137,19 @@ const FacultyMasterList = () => {
         .get(`${API_BASE_URL}/course_assigned_to/${userID}`)
         .then((res) => {
           setCoursesAssignedTo(res.data);
-          if (res.data.length > 0) {
-            setSelectedCourse(res.data[0].course_id); // ✅ Auto-select first course
+          if (!course_id && res.data.length > 0) {
+            setSelectedCourse(res.data[0].course_id);
           }
         })
         .catch((err) => console.error(err));
     }
   }, [userID]);
+
+  useEffect(() => {
+    if (course_id) setSelectedCourse(course_id);
+    if (section_id) setSelectedSection(section_id);
+    if (school_year_id) setSelectedSchoolYear(school_year_id);
+  }, [course_id, section_id, school_year_id]);
 
   useEffect(() => {
     if (userID) {
@@ -146,17 +170,16 @@ const FacultyMasterList = () => {
       .get(`${API_BASE_URL}/get_school_year/`)
       .then((res) => setSchoolYears(res.data))
       .catch((err) => console.error(err));
-  }, [])
+  }, []);
 
   useEffect(() => {
     axios
       .get(`${API_BASE_URL}/get_school_semester/`)
       .then((res) => setSchoolSemester(res.data))
       .catch((err) => console.error(err));
-  }, [])
+  }, []);
 
   useEffect(() => {
-
     axios
       .get(`${API_BASE_URL}/active_school_year`)
       .then((res) => {
@@ -166,13 +189,14 @@ const FacultyMasterList = () => {
         }
       })
       .catch((err) => console.error(err));
-
   }, []);
 
   useEffect(() => {
     if (selectedSchoolYear && selectedSchoolSemester) {
       axios
-        .get(`${API_BASE_URL}/get_selecterd_year/${selectedSchoolYear}/${selectedSchoolSemester}`)
+        .get(
+          `${API_BASE_URL}/get_selecterd_year/${selectedSchoolYear}/${selectedSchoolSemester}`
+        )
         .then((res) => {
           if (res.data.length > 0) {
             setSelectedActiveSchoolYear(res.data[0].school_year_id);
@@ -210,23 +234,32 @@ const FacultyMasterList = () => {
   const filteredStudents = classListAndDetails
     .filter((s) => {
       const matchesYear =
-        selectedSchoolYear === "" || String(s.year_id) === String(selectedSchoolYear);
+        selectedSchoolYear === "" ||
+        String(s.year_id) === String(selectedSchoolYear);
 
       const matchesSemester =
-        selectedSchoolSemester === "" || String(s.semester_id) === String(selectedSchoolSemester);
+        selectedSchoolSemester === "" ||
+        String(s.semester_id) === String(selectedSchoolSemester);
 
       const matchesCourse =
         selectedCourse === "" || String(s.course_id) === String(selectedCourse);
 
       const matchesSection =
-        selectedSection === "" || String(s.department_section_id) === String(selectedSection);
+        selectedSection === "" ||
+        String(s.department_section_id) === String(selectedSection);
 
       const matchesStatus =
         selectedStatusFilter === "" ||
         (selectedStatusFilter === "Regular" && Number(s.status) === 1) ||
         (selectedStatusFilter === "Irregular" && Number(s.status) !== 1);
 
-      return matchesYear && matchesSemester && matchesCourse && matchesSection && matchesStatus;
+      return (
+        matchesYear &&
+        matchesSemester &&
+        matchesCourse &&
+        matchesSection &&
+        matchesStatus
+      );
     })
     .sort((a, b) => {
       const nameA = `${a.last_name} ${a.first_name}`.toLowerCase();
@@ -247,16 +280,18 @@ const FacultyMasterList = () => {
   );
 
   // 🔒 Disable right-click
-  document.addEventListener('contextmenu', (e) => e.preventDefault());
+  document.addEventListener("contextmenu", (e) => e.preventDefault());
 
   // 🔒 Block DevTools shortcuts + Ctrl+P silently
-  document.addEventListener('keydown', (e) => {
+  document.addEventListener("keydown", (e) => {
     const isBlockedKey =
-      e.key === 'F12' || // DevTools
-      e.key === 'F11' || // Fullscreen
-      (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
-      (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
-      (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
+      e.key === "F12" || // DevTools
+      e.key === "F11" || // Fullscreen
+      (e.ctrlKey &&
+        e.shiftKey &&
+        (e.key.toLowerCase() === "i" || e.key.toLowerCase() === "j")) || // Ctrl+Shift+I/J
+      (e.ctrlKey && e.key.toLowerCase() === "u") || // Ctrl+U (View Source)
+      (e.ctrlKey && e.key.toLowerCase() === "p"); // Ctrl+P (Print)
 
     if (isBlockedKey) {
       e.preventDefault();
@@ -265,44 +300,57 @@ const FacultyMasterList = () => {
   });
 
   return (
-    <Box sx={{ height: "calc(100vh - 150px)", overflowY: "auto", paddingRight: 1, backgroundColor: "transparent" }}>
+    <Box
+      sx={{
+        height: "calc(100vh - 150px)",
+        overflowY: "auto",
+        paddingRight: 1,
+        backgroundColor: "transparent",
+      }}
+    >
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-  
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
 
           mb: 2,
-     
         }}
       >
         <Typography
           variant="h4"
           sx={{
-            fontWeight: 'bold',
+            fontWeight: "bold",
             color: titleColor,
-            fontSize: '36px',
+            fontSize: "36px",
           }}
         >
           CLASS LIST
         </Typography>
-
-
-
-
       </Box>
       <hr style={{ border: "1px solid #ccc", width: "95%" }} />
 
       <br />
 
-      <TableContainer component={Paper} sx={{ width: '95%', }}>
+      <TableContainer component={Paper} sx={{ width: "95%" }}>
         <Table size="small">
-          <TableHead sx={{ backgroundColor: '#6D2323', color: "white" }}>
+          <TableHead sx={{ backgroundColor: "#6D2323", color: "white" }}>
             <TableRow>
-              <TableCell colSpan={10} sx={{ border: `2px solid ${borderColor}`, py: 0.5, backgroundColor: settings?.header_color || "#1976d2", color: "white" }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
+              <TableCell
+                colSpan={10}
+                sx={{
+                  border: `2px solid ${borderColor}`,
+                  py: 0.5,
+                  backgroundColor: settings?.header_color || "#1976d2",
+                  color: "white",
+                }}
+              >
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                >
                   {/* Left: Total Count */}
                   <Typography fontSize="14px" fontWeight="bold" color="white">
                     Total Students: {filteredStudents.length}
@@ -321,23 +369,25 @@ const FacultyMasterList = () => {
                         color: "white",
                         borderColor: "white",
                         backgroundColor: "transparent",
-                        '&:hover': {
-                          borderColor: 'white',
-                          backgroundColor: 'rgba(255,255,255,0.1)',
+                        "&:hover": {
+                          borderColor: "white",
+                          backgroundColor: "rgba(255,255,255,0.1)",
                         },
-                        '&.Mui-disabled': {
+                        "&.Mui-disabled": {
                           color: "white",
                           borderColor: "white",
                           backgroundColor: "transparent",
                           opacity: 1,
-                        }
+                        },
                       }}
                     >
                       First
                     </Button>
 
                     <Button
-                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(prev - 1, 1))
+                      }
                       disabled={currentPage === 1}
                       variant="outlined"
                       size="small"
@@ -346,16 +396,16 @@ const FacultyMasterList = () => {
                         color: "white",
                         borderColor: "white",
                         backgroundColor: "transparent",
-                        '&:hover': {
-                          borderColor: 'white',
-                          backgroundColor: 'rgba(255,255,255,0.1)',
+                        "&:hover": {
+                          borderColor: "white",
+                          backgroundColor: "rgba(255,255,255,0.1)",
                         },
-                        '&.Mui-disabled': {
+                        "&.Mui-disabled": {
                           color: "white",
                           borderColor: "white",
                           backgroundColor: "transparent",
                           opacity: 1,
-                        }
+                        },
                       }}
                     >
                       Prev
@@ -368,31 +418,31 @@ const FacultyMasterList = () => {
                         onChange={(e) => setCurrentPage(Number(e.target.value))}
                         displayEmpty
                         sx={{
-                          fontSize: '12px',
+                          fontSize: "12px",
                           height: 36,
-                          color: 'white',
-                          border: '1px solid white',
-                          backgroundColor: 'transparent',
-                          '.MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'white',
+                          color: "white",
+                          border: "1px solid white",
+                          backgroundColor: "transparent",
+                          ".MuiOutlinedInput-notchedOutline": {
+                            borderColor: "white",
                           },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'white',
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "white",
                           },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'white',
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "white",
                           },
-                          '& svg': {
-                            color: 'white', // dropdown arrow icon color
-                          }
+                          "& svg": {
+                            color: "white", // dropdown arrow icon color
+                          },
                         }}
                         MenuProps={{
                           PaperProps: {
                             sx: {
                               maxHeight: 200,
-                              backgroundColor: '#fff', // dropdown background
-                            }
-                          }
+                              backgroundColor: "#fff", // dropdown background
+                            },
+                          },
                         }}
                       >
                         {Array.from({ length: totalPages }, (_, i) => (
@@ -404,11 +454,13 @@ const FacultyMasterList = () => {
                     </FormControl>
 
                     <Typography fontSize="11px" color="white">
-                      {totalPages} page{totalPages > 1 ? 's' : ''}
+                      {totalPages} page{totalPages > 1 ? "s" : ""}
                     </Typography>
 
                     <Button
-                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      }
                       disabled={currentPage === totalPages}
                       variant="outlined"
                       size="small"
@@ -417,16 +469,16 @@ const FacultyMasterList = () => {
                         color: "white",
                         borderColor: "white",
                         backgroundColor: "transparent",
-                        '&:hover': {
-                          borderColor: 'white',
-                          backgroundColor: 'rgba(255,255,255,0.1)',
+                        "&:hover": {
+                          borderColor: "white",
+                          backgroundColor: "rgba(255,255,255,0.1)",
                         },
-                        '&.Mui-disabled': {
+                        "&.Mui-disabled": {
                           color: "white",
                           borderColor: "white",
                           backgroundColor: "transparent",
                           opacity: 1,
-                        }
+                        },
                       }}
                     >
                       Next
@@ -442,22 +494,26 @@ const FacultyMasterList = () => {
                         color: "white",
                         borderColor: "white",
                         backgroundColor: "transparent",
-                        '&:hover': {
-                          borderColor: 'white',
-                          backgroundColor: 'rgba(255,255,255,0.1)',
+                        "&:hover": {
+                          borderColor: "white",
+                          backgroundColor: "rgba(255,255,255,0.1)",
                         },
-                        '&.Mui-disabled': {
+                        "&.Mui-disabled": {
                           color: "white",
                           borderColor: "white",
                           backgroundColor: "transparent",
                           opacity: 1,
-                        }
+                        },
                       }}
                     >
                       Last
                     </Button>
                     <Button
-                      onClick={() => setSortOrder(prev => prev === "asc" ? "desc" : "asc")}
+                      onClick={() =>
+                        setSortOrder((prev) =>
+                          prev === "asc" ? "desc" : "asc"
+                        )
+                      }
                       variant="outlined"
                       size="small"
                       sx={{
@@ -465,9 +521,9 @@ const FacultyMasterList = () => {
                         color: "white",
                         borderColor: "white",
                         backgroundColor: "transparent",
-                        '&:hover': {
-                          borderColor: 'white',
-                          backgroundColor: 'rgba(255,255,255,0.1)',
+                        "&:hover": {
+                          borderColor: "white",
+                          backgroundColor: "rgba(255,255,255,0.1)",
                         },
                       }}
                     >
@@ -480,11 +536,29 @@ const FacultyMasterList = () => {
           </TableHead>
         </Table>
       </TableContainer>
-      <TableContainer component={Paper} sx={{ width: '95%', border: `2px solid ${borderColor}`, p: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", margin: "1rem 0", padding: "0 1rem", }} gap={5}>
+      <TableContainer
+        component={Paper}
+        sx={{ width: "95%", border: `2px solid ${borderColor}`, p: 2 }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            margin: "1rem 0",
+            padding: "0 1rem",
+          }}
+          gap={5}
+        >
           <Box display="flex" flexDirection="column">
-            <Box display="flex" alignItems="center" gap={1} sx={{ minWidth: 500, marginRight: "1rem" }}>
-              <Typography fontSize={13} sx={{ minWidth: "100px" }}>Course: </Typography>
+            <Box
+              display="flex"
+              alignItems="center"
+              gap={1}
+              sx={{ minWidth: 500, marginRight: "1rem" }}
+            >
+              <Typography fontSize={13} sx={{ minWidth: "100px" }}>
+                Course:{" "}
+              </Typography>
               <FormControl fullWidth>
                 <InputLabel id="demo-simple-select-label">Course</InputLabel>
                 <Select
@@ -503,20 +577,29 @@ const FacultyMasterList = () => {
                     ))
                   ) : (
                     <MenuItem disabled>No courses assigned</MenuItem>
-                  )
-                  }
+                  )}
                 </Select>
               </FormControl>
             </Box>
-            <Box display="flex" gap={2} sx={{ marginTop: "1rem", marginRight:"50px" }}>
-              <Box display="flex" alignItems="center" gap={1} sx={{ minWidth: 550, }}>
-                <Typography fontSize={13} sx={{ minWidth: "100px" }}>Section</Typography>
+            <Box
+              display="flex"
+              gap={2}
+              sx={{ marginTop: "1rem", marginRight: "50px" }}
+            >
+              <Box
+                display="flex"
+                alignItems="center"
+                gap={1}
+                sx={{ minWidth: 550 }}
+              >
+                <Typography fontSize={13} sx={{ minWidth: "100px" }}>
+                  Section
+                </Typography>
                 <FormControl fullWidth>
                   <InputLabel id="demo-simple-select-label">Section</InputLabel>
                   <Select
                     labelId="demo-simple-select-label"
                     id="demo-simple-select"
-
                     style={{ width: "300px" }}
                     value={selectedSection}
                     label="Course"
@@ -524,19 +607,28 @@ const FacultyMasterList = () => {
                   >
                     {sectionAssignedTo.length > 0 ? (
                       sectionAssignedTo.map((section) => (
-                        <MenuItem value={section.section_id} key={section.section_id}>
+                        <MenuItem
+                          value={section.section_id}
+                          key={section.section_id}
+                        >
                           {section.program_code}-{section.section_description}
                         </MenuItem>
                       ))
                     ) : (
                       <MenuItem disabled>No section assigned</MenuItem>
-                    )
-                    }
+                    )}
                   </Select>
                 </FormControl>
               </Box>
-              <Box display="flex" alignItems="center" gap={1} sx={{ minWidth: 200, marginRight: "1rem" }}>
-                <Typography fontSize={13} sx={{ minWidth: "100px" }}>Student Status:</Typography>
+              <Box
+                display="flex"
+                alignItems="center"
+                gap={1}
+                sx={{ minWidth: 200, marginRight: "1rem" }}
+              >
+                <Typography fontSize={13} sx={{ minWidth: "100px" }}>
+                  Student Status:
+                </Typography>
                 <FormControl fullWidth>
                   <Select
                     value={selectedStatusFilter}
@@ -552,11 +644,20 @@ const FacultyMasterList = () => {
               </Box>
             </Box>
           </Box>
-          <Box display="flex" flexDirection="column" gap={2} sx={{ minWidth: "450px" }}>
+          <Box
+            display="flex"
+            flexDirection="column"
+            gap={2}
+            sx={{ minWidth: "450px" }}
+          >
             <Box display="flex" alignItems="center" gap={1}>
-              <Typography fontSize={13} sx={{ minWidth: "100px" }}>School Year:</Typography>
+              <Typography fontSize={13} sx={{ minWidth: "100px" }}>
+                School Year:
+              </Typography>
               <FormControl fullWidth>
-                <InputLabel id="demo-simple-select-label">School Years</InputLabel>
+                <InputLabel id="demo-simple-select-label">
+                  School Years
+                </InputLabel>
                 <Select
                   labelId="demo-simple-select-label"
                   id="demo-simple-select"
@@ -573,19 +674,22 @@ const FacultyMasterList = () => {
                     ))
                   ) : (
                     <MenuItem disabled>School Year is not found</MenuItem>
-                  )
-                  }
+                  )}
                 </Select>
               </FormControl>
             </Box>
             <Box display="flex" alignItems="center" gap={1}>
-              <Typography fontSize={13} sx={{ minWidth: "100px" }}>Semester: </Typography>
+              <Typography fontSize={13} sx={{ minWidth: "100px" }}>
+                Semester:{" "}
+              </Typography>
               <FormControl fullWidth>
-                <InputLabel id="demo-simple-select-label">School Semester</InputLabel>
+                <InputLabel id="demo-simple-select-label">
+                  School Semester
+                </InputLabel>
                 <Select
                   labelId="demo-simple-select-label"
                   id="demo-simple-select"
-                    style={{width: "200px", }}
+                  style={{ width: "200px" }}
                   value={selectedSchoolSemester}
                   label="School Semester"
                   onChange={handleSchoolSemesterChange}
@@ -598,57 +702,180 @@ const FacultyMasterList = () => {
                     ))
                   ) : (
                     <MenuItem disabled>School Semester is not found</MenuItem>
-                  )
-                  }
+                  )}
                 </Select>
               </FormControl>
             </Box>
           </Box>
         </Box>
       </TableContainer>
-      <TableContainer component={Paper} sx={{ width: "95%", marginTop: "2rem" }}>
+      <TableContainer
+        component={Paper}
+        sx={{ width: "95%", marginTop: "2rem" }}
+      >
         <Table size="small">
-          <TableHead sx={{ backgroundColor: settings?.header_color || "#1976d2" }}>
+          <TableHead
+            sx={{ backgroundColor: settings?.header_color || "#1976d2" }}
+          >
             <TableRow>
-              <TableCell sx={{ color: "white", textAlign: "center", fontSize: "12px", border: `2px solid ${borderColor}` }}>#</TableCell>
-              <TableCell sx={{ color: "white", textAlign: "center", fontSize: "12px", border: `2px solid ${borderColor}` }}>Student Number</TableCell>
-              <TableCell sx={{ color: "white", textAlign: "center", fontSize: "12px", border: `2px solid ${borderColor}` }}>Student Name</TableCell>
-              <TableCell sx={{ color: "white", textAlign: "center", fontSize: "12px", border: `2px solid ${borderColor}` }}>Section</TableCell>
-              <TableCell sx={{ color: "white", textAlign: "center", fontSize: "12px", border: `2px solid ${borderColor}` }}>Student Status</TableCell>
-              <TableCell sx={{ color: "white", textAlign: "center", fontSize: "12px", border: `2px solid ${borderColor}` }}>Class Schedule</TableCell>
-              <TableCell sx={{ color: "white", textAlign: "center", fontSize: "12px", border: `2px solid ${borderColor}` }}>Room</TableCell>
+              <TableCell
+                sx={{
+                  color: "white",
+                  textAlign: "center",
+                  fontSize: "12px",
+                  border: `2px solid ${borderColor}`,
+                }}
+              >
+                #
+              </TableCell>
+              <TableCell
+                sx={{
+                  color: "white",
+                  textAlign: "center",
+                  fontSize: "12px",
+                  border: `2px solid ${borderColor}`,
+                }}
+              >
+                Student Number
+              </TableCell>
+              <TableCell
+                sx={{
+                  color: "white",
+                  textAlign: "center",
+                  fontSize: "12px",
+                  border: `2px solid ${borderColor}`,
+                }}
+              >
+                Student Name
+              </TableCell>
+              <TableCell
+                sx={{
+                  color: "white",
+                  textAlign: "center",
+                  fontSize: "12px",
+                  border: `2px solid ${borderColor}`,
+                }}
+              >
+                Section
+              </TableCell>
+              <TableCell
+                sx={{
+                  color: "white",
+                  textAlign: "center",
+                  fontSize: "12px",
+                  border: `2px solid ${borderColor}`,
+                }}
+              >
+                Student Status
+              </TableCell>
+              <TableCell
+                sx={{
+                  color: "white",
+                  textAlign: "center",
+                  fontSize: "12px",
+                  border: `2px solid ${borderColor}`,
+                }}
+              >
+                Class Schedule
+              </TableCell>
+              <TableCell
+                sx={{
+                  color: "white",
+                  textAlign: "center",
+                  fontSize: "12px",
+                  border: `2px solid ${borderColor}`,
+                }}
+              >
+                Room
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {filteredStudents.length > 0 ? (
               filteredStudents.map((student, index) => (
                 <TableRow key={student.student_number}>
-                  <TableCell sx={{ textAlign: "center", border: `2px solid ${borderColor}` }}>
+                  <TableCell
+                    sx={{
+                      textAlign: "center",
+                      border: `2px solid ${borderColor}`,
+                    }}
+                  >
                     {index + 1}
                   </TableCell>
-                  <TableCell sx={{ textAlign: "center", border: `2px solid ${borderColor}` }}>
+                  <TableCell
+                    sx={{
+                      textAlign: "center",
+                      border: `2px solid ${borderColor}`,
+                    }}
+                  >
                     {student.student_number}
                   </TableCell>
-                  <TableCell sx={{ border: `2px solid ${borderColor}` }}>
-                    {student.last_name}, {student.first_name} {student.middle_name}
+                  <TableCell
+                    sx={{
+                      border: `2px solid ${borderColor}`,
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      "&:hover": {
+                        color: mainButtonColor,
+                        textDecoration: "underline",
+                      },
+                    }}
+                    onClick={() =>
+                      navigate("/grading_sheet", {
+                        state: {
+                          course_id: selectedCourse,
+                          section_id: selectedSection,
+                          school_year_id: selectedSchoolYear,
+                          departmentSection: department_section_id,
+                        },
+                      })
+                    }
+                  >
+                    {student.last_name}, {student.first_name}{" "}
+                    {student.middle_name}
                   </TableCell>
-                  <TableCell sx={{ textAlign: "center", border: `2px solid ${borderColor}` }}>
+                  <TableCell
+                    sx={{
+                      textAlign: "center",
+                      border: `2px solid ${borderColor}`,
+                    }}
+                  >
                     {student.program_code}-{student.section_description}
                   </TableCell>
-                  <TableCell sx={{ textAlign: "center", border: `2px solid ${borderColor}` }}>
+                  <TableCell
+                    sx={{
+                      textAlign: "center",
+                      border: `2px solid ${borderColor}`,
+                    }}
+                  >
                     {student.status === 1 ? "Regular" : "Irregular"}
                   </TableCell>
-                  <TableCell sx={{ textAlign: "center", border: `2px solid ${borderColor}` }}>
-                    {student.day} {student.school_time_start} - {student.school_time_end}
+                  <TableCell
+                    sx={{
+                      textAlign: "center",
+                      border: `2px solid ${borderColor}`,
+                    }}
+                  >
+                    {student.day} {student.school_time_start} -{" "}
+                    {student.school_time_end}
                   </TableCell>
-                  <TableCell sx={{ textAlign: "center", border: `2px solid ${borderColor}` }}>
+                  <TableCell
+                    sx={{
+                      textAlign: "center",
+                      border: `2px solid ${borderColor}`,
+                    }}
+                  >
                     {student.room_description}
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ border: `2px solid ${borderColor}` }}>
+                <TableCell
+                  colSpan={7}
+                  align="center"
+                  sx={{ border: `2px solid ${borderColor}` }}
+                >
                   No class details available
                 </TableCell>
               </TableRow>
@@ -661,5 +888,3 @@ const FacultyMasterList = () => {
 };
 
 export default FacultyMasterList;
-
-

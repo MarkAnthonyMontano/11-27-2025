@@ -14847,6 +14847,56 @@ app.get("/api/student_data_as_applicant/:id", async (req, res) => {
   }
 });
 
+// ✅ UPDATE person_table in ENROLLMENT DB3
+app.put('/api/enrollment_person/:person_id', async (req, res) => {
+    try {
+        const { person_id } = req.params;
+        const updateData = req.body;
+
+        if (!person_id) {
+            return res.status(400).json({ error: "Missing person_id" });
+        }
+
+        if (!updateData || Object.keys(updateData).length === 0) {
+            return res.status(400).json({ error: "No update data provided" });
+        }
+
+        // Remove unsafe fields if present
+        delete updateData.person_id;
+        delete updateData.created_at;
+        delete updateData.current_step;
+
+        // Build dynamic SET fields
+        const fields = Object.keys(updateData)
+            .map(field => `${field} = ?`)
+            .join(', ');
+
+        const values = Object.values(updateData);
+
+        // Execute update query
+        const query = `
+            UPDATE person_table
+            SET ${fields}
+            WHERE person_id = ?
+        `;
+
+        values.push(person_id);
+
+        const [result] = await db3.query(query, values);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Person not found" });
+        }
+
+        return res.json({ message: "Person updated successfully", updated: updateData });
+
+    } catch (error) {
+        console.error("❌ Error updating enrollment person:", error);
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+
 app.get("/uploads/by-student/:student_number", async (req, res) => {
   const student_number = req.params.student_number;
 

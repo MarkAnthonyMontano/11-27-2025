@@ -105,45 +105,45 @@ const RegistrarResetPassword = () => {
   const [otpRequired, setOtpRequired] = useState(true);
 
   // Fetch OTP setting
-useEffect(() => {
-  const fetchOtpSetting = async () => {
+  useEffect(() => {
+    const fetchOtpSetting = async () => {
+      try {
+        const person_id = localStorage.getItem("person_id");
+        const res = await axios.get(`${API_BASE_URL}/get-otp-setting/user/${person_id}`);
+        setOtpRequired(res.data.require_otp === 1);
+      } catch (err) {
+        console.error("Failed to load OTP setting for user", err);
+      }
+    };
+    fetchOtpSetting();
+  }, []);
+
+  // Update OTP setting
+  const handleOtpToggle = async (event) => {
+    const newValue = event.target.checked;
+    setOtpRequired(newValue);
+
     try {
       const person_id = localStorage.getItem("person_id");
-      const res = await axios.get(`${API_BASE_URL}/get-otp-setting/user/${person_id}`);
-      setOtpRequired(res.data.require_otp === 1);
+      const res = await axios.post(`${API_BASE_URL}/update-otp-setting`, {
+        type: "user",
+        person_id,
+        require_otp: newValue ? 1 : 0,
+      });
+
+      setSnack({
+        open: true,
+        message: res.data.message,
+        severity: "success",
+      });
     } catch (err) {
-      console.error("Failed to load OTP setting for user", err);
+      setSnack({
+        open: true,
+        message: err.response?.data?.message || "Failed to update OTP setting",
+        severity: "error",
+      });
     }
   };
-  fetchOtpSetting();
-}, []);
-
-// Update OTP setting
-const handleOtpToggle = async (event) => {
-  const newValue = event.target.checked;
-  setOtpRequired(newValue);
-
-  try {
-    const person_id = localStorage.getItem("person_id");
-    const res = await axios.post(`${API_BASE_URL}/update-otp-setting`, {
-      type: "user",
-      person_id,
-      require_otp: newValue ? 1 : 0,
-    });
-
-    setSnack({
-      open: true,
-      message: res.data.message,
-      severity: "success",
-    });
-  } catch (err) {
-    setSnack({
-      open: true,
-      message: err.response?.data?.message || "Failed to update OTP setting",
-      severity: "error",
-    });
-  }
-};
 
 
   const pageId = 73;
@@ -272,7 +272,7 @@ const handleOtpToggle = async (event) => {
             fontSize: "36px",
           }}
         >
-          REGISTRAR SETTINGS
+          SECURITY SETTINGS
         </Typography>
       </Box>
 
@@ -315,8 +315,8 @@ const handleOtpToggle = async (event) => {
           </Box>
 
           <Divider sx={{ mb: 2 }} />
-          <Box mt={3}>
-            <InputLabel style={{ color: "red" }}>
+          <Box mt={3} display="flex" flexDirection="column" alignItems="center">
+            <InputLabel sx={{ color: "red", mb: 1, textAlign: "center" }}>
               Turning this off may compromise your account, especially if
               <br /> your login is saved on another device.
             </InputLabel>
@@ -326,12 +326,38 @@ const handleOtpToggle = async (event) => {
                 <Switch
                   checked={otpRequired}
                   onChange={handleOtpToggle}
-                  color="primary"
+                  sx={{
+                    height: 50,
+
+                    width: 90, // adjust width proportionally
+                    '& .MuiSwitch-switchBase': {
+                      top: 3,
+                      left: 3,
+                      padding: 0,
+                      color: "black",
+
+                      '&.Mui-checked': {
+                        transform: 'translateX(40px)',
+                        color: "black"
+
+                      },
+                    },
+                    '& .MuiSwitch-thumb': {
+                      width: 44,
+                      height: 44,
+
+                    },
+                    '& .MuiSwitch-track': {
+                      borderRadius: 10,
+                    },
+                  }}
                 />
               }
               label="Require OTP during login"
-            />                                                           
+              sx={{ m: 0 }}
+            />
           </Box>
+
 
           {/* Form */}
           <form onSubmit={handleUpdate}>

@@ -5,9 +5,12 @@ import axios from 'axios';
 import { FaFileExcel } from "react-icons/fa";
 import { Table, TableBody, TableCell, TableHead, TableRow, TableContainer, TextField, Button, FormControl, Select, InputLabel, MenuItem, Box, Typography, Paper, Snackbar, Alert} from "@mui/material";
 import API_BASE_URL from "../apiConfig";
+import { useLocation } from "react-router-dom";
 const GradingSheet = () => {
 
   const settings = useContext(SettingsContext);
+  const location = useLocation();
+  const { course_id, section_id, school_year_id } = location.state || {};
 
   const [titleColor, setTitleColor] = useState("#000000");
   const [subtitleColor, setSubtitleColor] = useState("#555555");
@@ -46,8 +49,6 @@ const GradingSheet = () => {
 
   }, [settings]); 
 
-
-
   const [userID, setUserID] = useState("");
   const [user, setUser] = useState("");
   const [userRole, setUserRole] = useState("");
@@ -76,6 +77,23 @@ const GradingSheet = () => {
   const [snack, setSnack] = useState({ open: false, message: '', severity: 'info' });
   const filteredStudents = students;
   const itemsPerPage = 10;
+
+  useEffect(() => {
+    if (course_id) setSelectedCourse(course_id);
+    if (section_id) setSelectedSectionID(section_id);
+    if (section_id) handleFetchStudents(section_id);
+    if (school_year_id) setSelectedActiveSchoolYear(school_year_id);
+  }, [course_id, section_id, school_year_id]);
+
+  console.log(course_id,)
+  console.log(section_id)
+  console.log(school_year_id)
+
+  useEffect(() => {
+    if (selectedCourse && selectedSectionID && selectedActiveSchoolYear) {
+      handleFetchStudents(selectedSectionID);
+    }
+  }, [selectedCourse, selectedSectionID, selectedActiveSchoolYear]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("email");
@@ -788,7 +806,7 @@ const GradingSheet = () => {
                   type="button"
                 >
                   <FaFileExcel size={20} />
-                  Choose Excel
+                  Import Excel
                 </button>
               </Box>
               <Box display="flex" alignItems="center" gap={1} sx={{ minWidth: 200 }}>
@@ -936,15 +954,9 @@ const GradingSheet = () => {
                     <select
                       name="en_remarks"
                       value={student.en_remarks}
-                      onChange={(e) => handleChanges(index, "en_remarks", parseInt(e.target.value))}
                       className="w-full outline-none"
                     >
                       <option value="">{remarkConversion(student)}</option>
-                      <option value="0">ONGOING</option>
-                      <option value="4">DROP</option>
-                      <option value="1">PASSED</option>
-                      <option value="2">FAILED</option>
-                      <option value="3">INCOMPLETE</option>
                     </select>
                   </TableCell>
                   <TableCell sx={{ textAlign: "center", border: `2px solid ${borderColor}` }}>

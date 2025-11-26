@@ -680,9 +680,9 @@ const CertificateOfRegistration = forwardRef(({ student_number }, divToPrintRef)
           cursor: "pointer",
           fontSize: "16px",
           fontWeight: "bold",
-          position: "fixed",
+          position: "absolute",
           right: "17rem",
-          top: "19rem",
+          top: "14rem",
           transition: "background-color 0.3s, transform 0.2s",
         }}
         onMouseEnter={(e) => (e.target.style.backgroundColor = "#d3d3d3")}
@@ -709,9 +709,9 @@ const CertificateOfRegistration = forwardRef(({ student_number }, divToPrintRef)
           borderRadius: "5px",
           marginTop: "20px",
           cursor: "pointer",
-          position: "fixed",
+          position: "absolute",
           right: "1.8rem",
-          top: "19rem",
+          top: "14rem",
           fontSize: "16px",
           fontWeight: "bold",
           transition: "background-color 0.3s, transform 0.2s",
@@ -1501,6 +1501,7 @@ const CertificateOfRegistration = forwardRef(({ student_number }, divToPrintRef)
                         backgroundColor: "gray",
                         border: "1px solid black",
                         textAlign: "center",
+                        display: "none",
                       }}
                     >
                       Lec Value
@@ -1514,6 +1515,7 @@ const CertificateOfRegistration = forwardRef(({ student_number }, divToPrintRef)
                         backgroundColor: "gray",
                         border: "1px solid black",
                         textAlign: "center",
+                        display: "none",
                       }}
                     >
                       Lab Value
@@ -1610,7 +1612,7 @@ const CertificateOfRegistration = forwardRef(({ student_number }, divToPrintRef)
                           readOnly
                         />
                       </td>
-                      <td colSpan={2} style={{ border: "1px solid black" }}>
+                      <td colSpan={2} style={{ border: "1px solid black", display: "none"}}>
                         <input
                           type="text"
                           value={item.total_lec_value ?? ""}
@@ -1624,7 +1626,7 @@ const CertificateOfRegistration = forwardRef(({ student_number }, divToPrintRef)
                           }}
                         />
                       </td>
-                      <td colSpan={2} style={{ border: "1px solid black" }}>
+                      <td colSpan={2} style={{ border: "1px solid black", display: "none" }}>
                         <input
                           type="text"
                           value={item.total_lab_value ?? ""}
@@ -1766,7 +1768,7 @@ const CertificateOfRegistration = forwardRef(({ student_number }, divToPrintRef)
                         color: "black",
                         fontFamily: "Arial",
                         textAlign: "center",
-
+                        display: "none",
                       }}
                     >
                       {totalLecFees}
@@ -1778,7 +1780,7 @@ const CertificateOfRegistration = forwardRef(({ student_number }, divToPrintRef)
                         color: "black",
                         fontFamily: "Arial",
                         textAlign: "center",
-
+                        display: "none",
                       }}
                     >
                       {totalLabFees}

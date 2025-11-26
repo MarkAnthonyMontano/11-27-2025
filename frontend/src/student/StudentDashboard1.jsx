@@ -294,19 +294,6 @@ const StudentDashboard1 = () => {
         navigate(to);
     };
     // Do not alter
-    const handleUpdate = async (updatedData) => {
-        if (!person || !person.person_id) return;
-
-        try {
-            await axios.put(
-                `${API_BASE_URL}/api/enrollment_person/${person.person_id}`, // ✅ use new API
-                updatedData
-            );
-            console.log("✅ Auto-saved successfully");
-        } catch (error) {
-            console.error("❌ Auto-save failed:", error);
-        }
-    };
 
     // Helper: parse "YYYY-MM-DD" safely (local date in Asia/Manila)
     const parseISODate = (dateString) => {
@@ -351,10 +338,8 @@ const StudentDashboard1 = () => {
         return age < 0 ? "" : age;
     };
 
-    // 🧩 Real-time handleChange with Manila-based age
     const handleChange = (e) => {
-        const target = e && e.target ? e.target : {};
-        const { name, type, checked, value } = target;
+        const { name, type, checked, value } = e.target;
 
         const updatedValue = type === "checkbox" ? (checked ? 1 : 0) : value;
 
@@ -363,7 +348,7 @@ const StudentDashboard1 = () => {
             [name]: updatedValue,
         };
 
-        // Auto-calculate age if birthOfDate changes
+        // Auto-calculate age when birth date changes
         if (name === "birthOfDate") {
             updatedPerson.age = calculateAge(value);
         }
@@ -374,21 +359,39 @@ const StudentDashboard1 = () => {
         }
 
         setPerson(updatedPerson);
-        handleUpdate(updatedPerson); // real-time save
+
+        // 🔥 REAL FIX → send update to ENROLLMENT DB3
+        handleUpdate(updatedPerson);
     };
 
+    const handleUpdate = async (updatedData) => {
+        try {
+            const personIdToUpdate = selectedPerson?.person_id || userID;
+
+            // Remove internal fields that should NOT be saved
+            const { person_id, created_at, current_step, ...cleanPayload } = updatedData;
+
+            await axios.put(
+                `${API_BASE_URL}/api/enrollment_person/${personIdToUpdate}`,
+                cleanPayload
+            );
+
+            console.log("Real-time update saved.");
+        } catch (err) {
+            console.error("Real-time update failed", err);
+        }
+    };
 
 
     const handleBlur = async () => {
         try {
             const personIdToUpdate = selectedPerson?.person_id || userID;
 
-            // clone without person_id
-            const { person_id, ...updatePayload } = person;
+            const { person_id, created_at, current_step, ...cleanPayload } = person;
 
             await axios.put(
                 `${API_BASE_URL}/api/enrollment_person/${personIdToUpdate}`,
-                updatePayload
+                cleanPayload
             );
 
             console.log("Auto-saved on blur");
@@ -401,10 +404,14 @@ const StudentDashboard1 = () => {
     const autoSave = async () => {
         try {
             const personIdToUpdate = selectedPerson?.person_id || userID;
+
+            const { person_id, created_at, current_step, ...cleanPayload } = person;
+
             await axios.put(
                 `${API_BASE_URL}/api/enrollment_person/${personIdToUpdate}`,
-                person
+                cleanPayload
             );
+
             console.log("Auto-saved.");
         } catch (err) {
             console.error("Auto-save failed.");
@@ -745,22 +752,7 @@ const StudentDashboard1 = () => {
         return () => clearTimeout(delayDebounce);
     }, [searchQuery]);
 
-    // 🔒 Disable right-click
-    document.addEventListener('contextmenu', (e) => e.preventDefault());
 
-    // 🔒 Block DevTools shortcuts silently
-    document.addEventListener('keydown', (e) => {
-        const isBlockedKey =
-            e.key === 'F12' ||
-            e.key === 'F11' ||
-            (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
-            (e.ctrlKey && e.key === 'U');
-
-        if (isBlockedKey) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-    });
 
     // dot not alter
     return (
@@ -801,62 +793,62 @@ const StudentDashboard1 = () => {
 
 
 
-         <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          width: "100%",
-          mt: 2,
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            p: 2,
-            borderRadius: "10px",
-            backgroundColor: "#fffaf5",
-            border: "1px solid #6D2323",
-            boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
-            width: "100%",
-            overflow: "hidden",
-          }}
-        >
-          {/* Icon */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "#800000",
-              borderRadius: "8px",
-              width: 50,
-              height: 50,
-              flexShrink: 0,
-            }}
-          >
-            <ErrorIcon sx={{ color: "white", fontSize: 36 }} />
-          </Box>
+            <Box
+                sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    width: "100%",
+                    mt: 2,
+                }}
+            >
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        p: 2,
+                        borderRadius: "10px",
+                        backgroundColor: "#fffaf5",
+                        border: "1px solid #6D2323",
+                        boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
+                        width: "100%",
+                        overflow: "hidden",
+                    }}
+                >
+                    {/* Icon */}
+                    <Box
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            backgroundColor: "#800000",
+                            borderRadius: "8px",
+                            width: 50,
+                            height: 50,
+                            flexShrink: 0,
+                        }}
+                    >
+                        <ErrorIcon sx={{ color: "white", fontSize: 36 }} />
+                    </Box>
 
-          {/* Text */}
-          <Typography
-            sx={{
-              fontSize: "20px",
-              fontFamily: "Arial",
-              color: "#3e3e3e",
-              lineHeight: 1.3, // slightly tighter to fit in fewer rows
-              whiteSpace: "normal",
-              overflow: "hidden",
-            }}
-          >
-            <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
-            <strong>1.</strong> Kindly type <strong>'NA'</strong> in boxes where there are no possible answers to the information being requested. &nbsp; | &nbsp;
-            <strong>2.</strong> To use the letter <strong>'Ñ'</strong>, press <kbd>ALT</kbd> + <kbd>165</kbd>; for <strong>'ñ'</strong>, press <kbd>ALT</kbd> + <kbd>164</kbd>. &nbsp; | &nbsp;
-            <strong>3.</strong> This is the list of all printable files.
-          </Typography>
-        </Box>
-      </Box>
+                    {/* Text */}
+                    <Typography
+                        sx={{
+                            fontSize: "20px",
+                            fontFamily: "Arial",
+                            color: "#3e3e3e",
+                            lineHeight: 1.3, // slightly tighter to fit in fewer rows
+                            whiteSpace: "normal",
+                            overflow: "hidden",
+                        }}
+                    >
+                        <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
+                        <strong>1.</strong> Kindly type <strong>'NA'</strong> in boxes where there are no possible answers to the information being requested. &nbsp; | &nbsp;
+                        <strong>2.</strong> To use the letter <strong>'Ñ'</strong>, press <kbd>ALT</kbd> + <kbd>165</kbd>; for <strong>'ñ'</strong>, press <kbd>ALT</kbd> + <kbd>164</kbd>. &nbsp; | &nbsp;
+                        <strong>3.</strong> This is the list of all printable files.
+                    </Typography>
+                </Box>
+            </Box>
 
 
             {/* Cards Section */}
@@ -943,96 +935,96 @@ const StudentDashboard1 = () => {
 
             <Container>
 
-              <Container>
-                 <h1
-                   style={{
-                     fontSize: "50px",
-                     fontWeight: "bold",
-                     textAlign: "center",
-                     color: subtitleColor,
-                     marginTop: "25px",
-                   }}
-                 >
-                   APPLICANT FORM
-                 </h1>
-                 <div style={{ textAlign: "center" }}>
-                   Complete the applicant form to secure your place for the upcoming academic year at{" "}
-                   {shortTerm ? (
-                     <>
-                       <strong>{shortTerm.toUpperCase()}</strong> <br />
-                       {companyName || ""}
-                     </>
-                   ) : (
-                     companyName || ""
-                   )}
-                   .
-                 </div>
-       
-       
-               </Container>
+                <Container>
+                    <h1
+                        style={{
+                            fontSize: "50px",
+                            fontWeight: "bold",
+                            textAlign: "center",
+                            color: subtitleColor,
+                            marginTop: "25px",
+                        }}
+                    >
+                        APPLICANT FORM
+                    </h1>
+                    <div style={{ textAlign: "center" }}>
+                        Complete the applicant form to secure your place for the upcoming academic year at{" "}
+                        {shortTerm ? (
+                            <>
+                                <strong>{shortTerm.toUpperCase()}</strong> <br />
+                                {companyName || ""}
+                            </>
+                        ) : (
+                            companyName || ""
+                        )}
+                        .
+                    </div>
+
+
+                </Container>
 
                 <br />
 
-               <Box sx={{ display: "flex", justifyContent: "center", width: "100%", px: 4 }}>
-            {steps.map((step, index) => (
-              <React.Fragment key={index}>
-                {/* Wrap the step with Link for routing */}
-                <Link to={step.path} style={{ textDecoration: "none" }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => handleStepClick(index)}
-                  >
-                    {/* Step Icon */}
-                    <Box
-                      sx={{
-                        width: 50,
-                        height: 50,
-                        borderRadius: "50%",
-                     border: `2px solid ${borderColor}`, 
-                     backgroundColor: activeStep === index ? settings?.header_color || "#1976d2" : "#E8C999",
-                        color: activeStep === index ? "#fff" : "#000",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {step.icon}
-                    </Box>
+                <Box sx={{ display: "flex", justifyContent: "center", width: "100%", px: 4 }}>
+                    {steps.map((step, index) => (
+                        <React.Fragment key={index}>
+                            {/* Wrap the step with Link for routing */}
+                            <Link to={step.path} style={{ textDecoration: "none" }}>
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        alignItems: "center",
+                                        cursor: "pointer",
+                                    }}
+                                    onClick={() => handleStepClick(index)}
+                                >
+                                    {/* Step Icon */}
+                                    <Box
+                                        sx={{
+                                            width: 50,
+                                            height: 50,
+                                            borderRadius: "50%",
+                                            border: `2px solid ${borderColor}`,
+                                            backgroundColor: activeStep === index ? settings?.header_color || "#1976d2" : "#E8C999",
+                                            color: activeStep === index ? "#fff" : "#000",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                        }}
+                                    >
+                                        {step.icon}
+                                    </Box>
 
-                    {/* Step Label */}
-                    <Typography
-                      sx={{
-                        mt: 1,
-                        color: activeStep === index ? "#6D2323" : "#000",
-                        fontWeight: activeStep === index ? "bold" : "normal",
-                        fontSize: 14,
-                      }}
-                    >
-                      {step.label}
-                    </Typography>
-                  </Box>
-                </Link>
+                                    {/* Step Label */}
+                                    <Typography
+                                        sx={{
+                                            mt: 1,
+                                            color: activeStep === index ? "#6D2323" : "#000",
+                                            fontWeight: activeStep === index ? "bold" : "normal",
+                                            fontSize: 14,
+                                        }}
+                                    >
+                                        {step.label}
+                                    </Typography>
+                                </Box>
+                            </Link>
 
-                {/* Connector Line */}
-                {index < steps.length - 1 && (
-                  <Box
-                    sx={{
-                      height: "2px",
-                      backgroundColor: "#6D2323",
-                      flex: 1,
-                      alignSelf: "center",
-                      mx: 2,
-                    }}
-                  />
-                )}
-              </React.Fragment>
-            ))}
-          </Box>
+                            {/* Connector Line */}
+                            {index < steps.length - 1 && (
+                                <Box
+                                    sx={{
+                                        height: "2px",
+                                        backgroundColor: "#6D2323",
+                                        flex: 1,
+                                        alignSelf: "center",
+                                        mx: 2,
+                                    }}
+                                />
+                            )}
+                        </React.Fragment>
+                    ))}
+                </Box>
                 <br />
 
                 <form>
@@ -1102,7 +1094,7 @@ const StudentDashboard1 = () => {
                                     labelId="academic-program-label"
                                     id="academic-program-select"
                                     name="academicProgram"
-                                    readOnly
+
                                     value={person.academicProgram || ""}
                                     label="Academic Program"
                                     onChange={handleChange}
@@ -1127,7 +1119,7 @@ const StudentDashboard1 = () => {
                                     labelId="classified-as-label"
                                     id="classified-as-select"
                                     name="classifiedAs"
-                                    readOnly
+
                                     value={person.classifiedAs || ""}
                                     label="Classified As"
                                     onChange={handleChange}
@@ -1155,7 +1147,7 @@ const StudentDashboard1 = () => {
                                     labelId="applying-as-label"
                                     id="applying-as-select"
                                     name="applyingAs"
-                                    readOnly
+
                                     value={person.applyingAs || ""}
                                     label="Applying As"
                                     onChange={handleChange}
@@ -2727,7 +2719,7 @@ const StudentDashboard1 = () => {
                                         onClick={handleUpload}
                                         sx={{
                                             backgroundColor: "#6D2323",
-                                            border: `2px solid ${borderColor}`, 
+                                            border: `2px solid ${borderColor}`,
                                             color: "white",
                                             fontWeight: "bold",
                                             "&:hover": {
@@ -2749,7 +2741,7 @@ const StudentDashboard1 = () => {
                                 onClick={handleOpen}
                                 sx={{
                                     backgroundColor: mainButtonColor,
-                                    border: `2px solid ${borderColor}`, 
+                                    border: `2px solid ${borderColor}`,
                                     color: "#fff", // Set text color to white
                                     marginRight: "5px", // Add margin between buttons
                                     "&:hover": {
@@ -2773,27 +2765,27 @@ const StudentDashboard1 = () => {
                                         alert("Please complete all required fields before proceeding.");
                                     }
                                 }}
-                                  endIcon={
-                                 <ArrowForwardIcon
-                                   sx={{
-                                     color: '#fff',
-                                     transition: 'color 0.3s',
-                                   }}
-                                 />
-                               }
-                               sx={{
-                                 backgroundColor: mainButtonColor,
-                                 border: `2px solid ${borderColor}`, 
-                                 color: '#fff',
-                                 '&:hover': {
-                                    backgroundColor: "#000000",
-                                   color: '#fff',
-                                   '& .MuiSvgIcon-root': {
-                                     color: '#fff',
-                                   },
-                                 },
-                               }}
-                             >
+                                endIcon={
+                                    <ArrowForwardIcon
+                                        sx={{
+                                            color: '#fff',
+                                            transition: 'color 0.3s',
+                                        }}
+                                    />
+                                }
+                                sx={{
+                                    backgroundColor: mainButtonColor,
+                                    border: `2px solid ${borderColor}`,
+                                    color: '#fff',
+                                    '&:hover': {
+                                        backgroundColor: "#000000",
+                                        color: '#fff',
+                                        '& .MuiSvgIcon-root': {
+                                            color: '#fff',
+                                        },
+                                    },
+                                }}
+                            >
                                 Next Step
                             </Button>
                         </Box>

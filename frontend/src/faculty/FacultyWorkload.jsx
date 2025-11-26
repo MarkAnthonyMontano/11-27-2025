@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { SettingsContext } from "../App";
 import axios from 'axios';
 import EaristLogo from '../assets/EaristLogo.png';
@@ -47,7 +48,7 @@ const FacultyWorkload = () => {
 
     }, [settings]);
 
-
+    const navigate = useNavigate();
     const [userID, setUserID] = useState("");
     const [user, setUser] = useState("");
     const [userRole, setUserRole] = useState("");
@@ -117,6 +118,52 @@ const FacultyWorkload = () => {
 
         fetchSchedule();
     }, [profData.prof_id]);
+
+    const formatTime = (timeStr) => {
+        if (!timeStr) return '';
+        const [time, modifier] = timeStr.split(' ');
+        let [hours, minutes] = time.split(':').map(Number);
+
+        if (modifier) {
+        if (modifier.toUpperCase() === 'PM' && hours < 12) hours += 12;
+        if (modifier.toUpperCase() === 'AM' && hours === 12) hours = 0;
+        }
+
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        let displayHours = hours % 12;
+        if (displayHours === 0) displayHours = 12;
+
+        return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+    };
+
+    const getDayScheduleRange = (day) => {
+        const daySchedules = schedule.filter(entry => entry.day_description.toUpperCase() === day.toUpperCase());
+        if (!daySchedules.length) return "";
+        
+        const parseTime = (timeStr) => {
+        if (!timeStr) return 0;
+        const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+        if (!match) return 0;
+        let [_, h, m, mod] = match;
+        let hours = Number(h);
+        const minutes = Number(m);
+        if (mod?.toUpperCase() === 'PM' && hours < 12) hours += 12;
+        if (mod?.toUpperCase() === 'AM' && hours === 12) hours = 0;
+        return hours * 60 + minutes;
+        };
+
+        const earliest = daySchedules.reduce((min, curr) => {
+            return parseTime(curr.school_time_start) < parseTime(min) ? curr.school_time_start : min;
+        }, daySchedules[0].school_time_start);
+
+        const latest = daySchedules.reduce((max, curr) => {
+            return parseTime(curr.school_time_end) > parseTime(max) ? curr.school_time_end : max;
+        }, daySchedules[0].school_time_end);
+
+        
+        return `${formatTime(earliest)} - ${formatTime(latest)}`;
+    };
+
 
     const isTimeInSchedule = (start, end, day) => {
         const parseTime = (timeStr) => {
@@ -216,13 +263,34 @@ const FacultyWorkload = () => {
             }
 
             return (
-                <span
-                    className={`relative inline-block text-center ${totalHours === 1 ? "text-[10px]" : "text-[11px]"
-                        }`}
-                    style={{ marginTop }}
-                >
-                    {text}
-                </span>
+
+                    <span
+                        onClick={() => navigate("/faculty_masterlist", {
+                            state: {
+                                course_id: entry.course_id,
+                                section_id: entry.section_id,
+                                department_section_id: entry.department_section_id,
+                                school_year_id: entry.school_year_id,
+                            },
+                        })}
+                        className={`relative cursor-pointer inline-block text-center ${totalHours === 1 ? "text-[10px]" : "text-[11px]"
+                            }`}
+                        style={{ 
+                            marginTop, 
+                            color: "inherit",
+                            transition: "all 0.2s",
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.color = mainButtonColor;
+                            e.currentTarget.style.textDecoration = "underline";
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.color = "";
+                            e.currentTarget.style.textDecoration = "none";
+                        }}
+                    >   
+                        {text}
+                    </span>
             );
         }
 
@@ -467,31 +535,31 @@ const FacultyWorkload = () => {
                                     </td>
                                     <td className='p-0 m-0'>
                                         <div className='min-w-[6.8rem] text-center border border-black border-l-0 border-b-0 text-[14px]'>MONDAY</div>
-                                        <p className='min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]'>7:00AM - 9:00PM</p>
+                                        <p className='min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px] h-[20px]'>{getDayScheduleRange('MON')}</p>
                                     </td>
                                     <td className='p-0 m-0'>
                                         <div className='min-w-[6.8rem] text-center border border-black border-l-0 border-b-0 text-[14px]'>TUESDAY</div>
-                                        <p className='min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]'>7:00AM - 9:00PM</p>
+                                        <p className='min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px] h-[20px]'>{getDayScheduleRange('TUE')}</p>
                                     </td>
                                     <td className='p-0 m-0'>
                                         <div className='min-w-[7rem] text-center border border-black border-l-0 border-b-0 text-[14px]'>WEDNESDAY</div>
-                                        <p className='min-w-[7rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]'>7:00AM - 9:00PM</p>
+                                        <p className='min-w-[7rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px] h-[20px]'>{getDayScheduleRange('WED')}</p>
                                     </td>
                                     <td className='p-0 m-0'>
                                         <div className='min-w-[6.9rem] text-center border border-black border-l-0 border-b-0 text-[14px]'>THURSDAY</div>
-                                        <p className='min-w-[6.9rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]'>7:00AM - 9:00PM</p>
+                                        <p className='min-w-[6.9rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px] h-[20px]'>{getDayScheduleRange('THU')}</p>
                                     </td>
                                     <td className='p-0 m-0'>
                                         <div className='min-w-[6.8rem] text-center border border-black border-l-0 border-b-0 text-[14px]'>FRIDAY</div>
-                                        <p className='min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]'>7:00AM - 9:00PM</p>
+                                        <p className='min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px] h-[20px]'>{getDayScheduleRange('FRI')}</p>
                                     </td>
                                     <td className='p-0 m-0'>
                                         <div className='min-w-[6.8rem] text-center border border-black border-l-0 border-b-0 text-[14px]'>SATUDAY</div>
-                                        <p className='min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]'>7:00AM - 9:00PM</p>
+                                        <p className='min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px] h-[20px]'>{getDayScheduleRange('SAT')}</p>
                                     </td>
                                     <td className='p-0 m-0'>
                                         <div className='min-w-[6.8rem] text-center border border-black border-l-0 border-b-0 text-[14px]'>SUNDAY</div>
-                                        <p className='min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]'>7:00AM - 9:00PM</p>
+                                        <p className='min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px] h-[20px]'>{getDayScheduleRange('SUN')}</p>
                                     </td>
                                 </tr>
                             </thead>
